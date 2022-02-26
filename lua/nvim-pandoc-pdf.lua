@@ -2,11 +2,7 @@ local M = {}
 -- Runs `pandoc` command on the current buffer to convert it into a pdf.
 
 -- file and any other arguments to the Pandoc call
---   args[1] should be the name of the defaults file
--- Takes `args` as a string list of arguments to specify the pandoc defaults
---   args[..] are anything else to pass as command line arguments
---
--- Uses lualatex as the pdf engine unless `--pdf-engine=..` is specified as an argument.
+-- Takes `args` as a string list of arguments to pass to the pandoc command line
 --
 -- Writes a pdf file with the same base filename as the current buffer.
 --
@@ -20,17 +16,12 @@ function M.pandoc_pdf(args)
 
   local arg_fields = {}
   args:gsub('([^ ]+)', function(c) arg_fields[#arg_fields+1] = c end)
-  local pandoc_default = table.remove(arg_fields,1)
 
   local cmd = {
     'pandoc',
     '-o',
     shortname,
-    '--pdf-engine=lualatex',
   }
-  if pandoc_default then
-    cmd[#cmd + 1] = '-d' .. pandoc_default
-  end
   for c = 1, #arg_fields do
     cmd[#cmd + 1] = arg_fields[c]
   end
@@ -42,7 +33,7 @@ function M.pandoc_pdf(args)
   local stderr = vim.loop.new_pipe()
   local output = ''
   local error_output = ''
-  vim.notify('Pandoc converting ' .. shortname,'info',
+  vim.notify('Pandoc starting conversion for ' .. shortname,'info',
     {
       title='Pandoc',
       timeout = 1000
