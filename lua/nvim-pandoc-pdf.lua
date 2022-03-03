@@ -27,10 +27,10 @@ function M.pandoc_pdf(args)
   end
   cmd[#cmd + 1] = fullname
 
-  -- TO-DO: Add option to open output file or not
-  cmd[#cmd + 1] = '&&'
-  cmd[#cmd + 1] = 'xdg-open'
-  cmd[#cmd + 1] = shortname
+  -- TO-DO: Add option to open output file or not; this way is broken
+  -- cmd[#cmd + 1] = '&&'
+  -- cmd[#cmd + 1] = 'xdg-open'
+  -- cmd[#cmd + 1] = shortname
 
   -- https://github.com/rcarriga/nvim-notify/wiki/Usage-Recipes#output-of-command
   local stdin = vim.loop.new_pipe()
