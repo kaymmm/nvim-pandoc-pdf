@@ -11,7 +11,7 @@
 --
 -- Displays Pandoc output in a notification
 
-vim.api.nvim_add_user_command(
+vim.api.nvim_create_user_command(
   'Pandoc',
   function(opts)
     require('nvim-pandoc-pdf').pandoc_pdf(opts.args)
