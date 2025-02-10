@@ -38,7 +38,7 @@ function M.pandoc_pdf(args)
   local stderr = vim.loop.new_pipe()
   local output = ''
   local error_output = ''
-  vim.notify('Pandoc starting conversion for ' .. shortname,'info',
+  vim.notify('Pandoc starting conversion for ' .. shortname, vim.log.levels.INFO,
     {
       title='Pandoc',
       timeout = 1000
@@ -54,13 +54,20 @@ function M.pandoc_pdf(args)
       stdout:close()
       stderr:close()
       if #output > 0 then
-        vim.notify(output,'info',{title='Pandoc'})
+        vim.notify(output, vim.log.levels.INFO,
+          {
+            title='Pandoc'
+          })
       end
       if #error_output > 0 then
-        vim.notify(error_output, 'error',{title='Pandoc', timeout=false})
+        vim.notify(error_output, vim.log.levels.ERROR,
+          {
+            title='Pandoc',
+            timeout=false
+          })
       end
       if #output == 0 and #error_output == 0 then
-        vim.notify('Pandoc successfully created ' .. shortname, 'info',
+        vim.notify('Pandoc successfully created ' .. shortname, vim.log.levels.INFO,
           {
             title='Pandoc'
           })
