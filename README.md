@@ -1,20 +1,19 @@
 # nvim-pandoc-pdf
 
-A small plugin to compile documents into PDFs using Pandoc. It uses nvim-notify to display the compilation status.
+A small plugin to compile documents into PDFs using Pandoc. It uses vim.notify to display the compilation status.
 
 ## Installation
 
-Using Packer:
+Using Lazy:
 
 ```lua
-use {
+{
   'kaymmm/nvim-pandoc-pdf',
-  requires={'rcarriga/nvim-notify'},
   -- ft={[optional, whatever filetypes you want, e.g., `{'markdown', 'html'}`]
 }
 ```
 
-Feel free to set up nvim-notify to your liking.
+Feel free to set up notifications to your liking.
 
 ## Usage
 

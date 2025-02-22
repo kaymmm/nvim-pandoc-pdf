@@ -10,7 +10,6 @@ local M = {}
 
 
 function M.pandoc_pdf(args)
-  vim.notify = require('notify')
   local shortname = vim.fn.expand('%:t:r') .. '.pdf'
   local fullname = vim.api.nvim_buf_get_name(0)
 
