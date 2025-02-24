@@ -1,89 +1,63 @@
 local M = {}
 -- Runs `pandoc` command on the current buffer to convert it into a pdf.
-
--- file and any other arguments to the Pandoc call
+--
 -- Takes `args` as a string list of arguments to pass to the pandoc command line
 --
 -- Writes a pdf file with the same base filename as the current buffer.
 --
--- Displays Pandoc output in a notification
+-- Displays Pandoc output in a notification using Snacks.notifier
 
 
 function M.pandoc_pdf(args)
-  local shortname = vim.fn.expand('%:t:r') .. '.pdf'
-  local fullname = vim.api.nvim_buf_get_name(0)
-
-  local arg_fields = {}
+  local uv = vim.uv
+  vim.notify = require('snacks').notifier.notify
+  local outname = vim.fn.expand('%:t:r') .. '.pdf'
+  local bufname = vim.api.nvim_buf_get_name(0)
+  local arg_fields = { '-o', outname, }
   args:gsub('([^ ]+)', function(c) arg_fields[#arg_fields+1] = c end)
 
-  local cmd = {
-    'pandoc',
-    '-o',
-    shortname,
-  }
-  for c = 1, #arg_fields do
-    cmd[#cmd + 1] = arg_fields[c]
+  arg_fields[#arg_fields + 1] = bufname
+
+  local notify = function(msg, level, timeout)
+    vim.notify(msg, level, {title="Pandoc to PDF", timeout = timeout})
   end
-  cmd[#cmd + 1] = fullname
-  local stdin = vim.loop.new_pipe()
-  local stdout = vim.loop.new_pipe()
-  local stderr = vim.loop.new_pipe()
-  local output = ''
-  local error_output = ''
-  vim.notify('Pandoc starting conversion for ' .. shortname, vim.log.levels.INFO,
-    {
-      title='Pandoc',
-      timeout = 1000
-    })
-  vim.loop.spawn(cmd[1],
-    {
-      stdio = { stdin, stdout, stderr },
-      detached = true,
-      args = #cmd > 1 and vim.list_slice(cmd, 2, #cmd) or nil,
+
+  local stdout = uv.new_pipe()
+  local stderr = uv.new_pipe()
+  local o, e = "", ""
+  handle = uv.spawn('pandoc', {
+      stdio = { nil, stdout, stderr },
+      args = arg_fields,
     },
-    function(_)
-      stdin:close()
+    vim.schedule_wrap(function()
+      if #e > 0 then
+        notify(e, vim.log.levels.ERROR, 10000)
+      end
+      if #o > 0 then
+        notify(o, vim.log.levels.INFO, 3000)
+      elseif e == "" then
+        notify("Pandoc successfully wrote " .. outname, vim.log.levels.INFO, 3000)
+      end
+      stdout:read_stop()
+      stderr:read_stop()
       stdout:close()
       stderr:close()
-      if #output > 0 then
-        vim.notify(output, vim.log.levels.INFO,
-          {
-            title='Pandoc'
-          })
-      end
-      if #error_output > 0 then
-        vim.notify(error_output, vim.log.levels.ERROR,
-          {
-            title='Pandoc',
-            timeout=false
-          })
-      end
-      if #output == 0 and #error_output == 0 then
-        vim.notify('Pandoc successfully created ' .. shortname, vim.log.levels.INFO,
-          {
-            title='Pandoc'
-          })
-        -- To-do: open file after it's written
-        --   this isn't working right now (does nothing) but without scheduling
-        --   it throws an error
-        -- vim.schedule_wrap(function() vim.fn.jobstart({'xdg-open', shortname}) end)
-      end
-    end
+      handle:close()
+    end)
   )
-  stdout:read_start(function(err, data)
-    if err then
-      error_output = error_output .. (err or data)
-      return
-    end
-    if data then
-      output = output .. data
+  notify("Pandoc starting conversion for " .. outname, vim.log.levels.INFO, 3000)
+  uv.read_start(stdout, function(err, data)
+    assert(not err, err)
+    if data or err then
+      o = o .. (data or err)
     end
   end)
-  stderr:read_start(function(err, data)
-    if err or data then
-      error_output = error_output .. (err or data)
+  uv.read_start(stderr, vim.schedule_wrap(function(err, data)
+    assert(not err, err)
+    if data or err then
+      e = e .. (data or err)
     end
-  end)
+  end))
 end
 
 return M
